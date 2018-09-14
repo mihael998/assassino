@@ -73,7 +73,7 @@ export class Server {
                             sessione.stato = Stato.Esecuzione;
                             sessione.creaPartita();
                             sessione.partecipanti.forEach((value) => {
-                                value.ws.send(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.PartitaIniziata, { durata: sessione.durataPartita, giocatori: sessione.getGiocatori() }).toJson());
+                                value.ws.send(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.PartitaIniziata, { durata: sessione.durataPartita, giocatori: sessione.getGiocatori(), }).toJson());
 
                             })
                         }
