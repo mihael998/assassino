@@ -1,0 +1,8 @@
+Client->Server
+{
+    "tipoComunicazione":0|1;
+    "valoreComunicazione": 0|1;
+    "contenuto": {
+
+    };    
+}

@@ -2,60 +2,79 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var Comunicazione;
 (function (Comunicazione) {
-    let Tipo;
-    (function (Tipo) {
-        Tipo[Tipo["Richiesta"] = 0] = "Richiesta";
-        Tipo[Tipo["Risposta"] = 1] = "Risposta";
-    })(Tipo = Comunicazione.Tipo || (Comunicazione.Tipo = {}));
-    let TipoFase;
-    (function (TipoFase) {
-        TipoFase[TipoFase["Preparazione"] = 0] = "Preparazione";
-        TipoFase[TipoFase["Gioco"] = 1] = "Gioco";
-    })(TipoFase = Comunicazione.TipoFase || (Comunicazione.TipoFase = {}));
-    let TipoPreparazione;
-    (function (TipoPreparazione) {
-        TipoPreparazione[TipoPreparazione["CreaPartita"] = 0] = "CreaPartita";
-        TipoPreparazione[TipoPreparazione["JoinPartita"] = 1] = "JoinPartita";
-    })(TipoPreparazione = Comunicazione.TipoPreparazione || (Comunicazione.TipoPreparazione = {}));
-    let TipoGioco;
-    (function (TipoGioco) {
-        TipoGioco[TipoGioco["PaesanoMorto"] = 0] = "PaesanoMorto";
-        TipoGioco[TipoGioco["AssassinoScoperto"] = 1] = "AssassinoScoperto";
-    })(TipoGioco = Comunicazione.TipoGioco || (Comunicazione.TipoGioco = {}));
+    let Client;
+    (function (Client) {
+        let TipoComunicazione;
+        (function (TipoComunicazione) {
+            TipoComunicazione[TipoComunicazione["CreaSessione"] = 0] = "CreaSessione";
+            TipoComunicazione[TipoComunicazione["JoinSessione"] = 1] = "JoinSessione";
+            TipoComunicazione[TipoComunicazione["ScegliNickname"] = 2] = "ScegliNickname";
+            TipoComunicazione[TipoComunicazione["StatoPronto"] = 3] = "StatoPronto";
+            TipoComunicazione[TipoComunicazione["CittadinoMorto"] = 4] = "CittadinoMorto";
+            TipoComunicazione[TipoComunicazione["CittadinoGuarito"] = 5] = "CittadinoGuarito";
+            TipoComunicazione[TipoComunicazione["PoliziottoArresta"] = 6] = "PoliziottoArresta";
+        })(TipoComunicazione = Client.TipoComunicazione || (Client.TipoComunicazione = {}));
+    })(Client = Comunicazione.Client || (Comunicazione.Client = {}));
     let Server;
     (function (Server) {
-        let EsitoComunicazione;
-        (function (EsitoComunicazione) {
-            EsitoComunicazione[EsitoComunicazione["Positivo"] = 0] = "Positivo";
-            EsitoComunicazione[EsitoComunicazione["Negativo"] = 1] = "Negativo";
-        })(EsitoComunicazione = Server.EsitoComunicazione || (Server.EsitoComunicazione = {}));
-        let Successo;
-        (function (Successo) {
-            Successo[Successo["Ok"] = 200] = "Ok";
-            Successo[Successo["Created"] = 201] = "Created";
-            Successo[Successo["Accepted"] = 202] = "Accepted";
-        })(Successo = Server.Successo || (Server.Successo = {}));
-        let Errore;
-        (function (Errore) {
-            Errore[Errore["BadRequest"] = 400] = "BadRequest";
-            Errore[Errore["Unauthorized"] = 401] = "Unauthorized";
-            Errore[Errore["Forbidden"] = 402] = "Forbidden";
-            Errore[Errore["NotFound"] = 403] = "NotFound";
-        })(Errore = Server.Errore || (Server.Errore = {}));
-    })(Server = Comunicazione.Server || (Comunicazione.Server = {}));
-    class Risposta {
-        constructor(stato, contenuto, messaggio) {
-            this.tipo = 1;
-            this.valore = 200;
-            this.valore = stato;
-            if (messaggio != undefined)
-                this.messaggio = messaggio;
-            if (contenuto != undefined)
+        let Tipo;
+        (function (Tipo) {
+            Tipo[Tipo["Comunicazione"] = 0] = "Comunicazione";
+            Tipo[Tipo["Risposta"] = 1] = "Risposta";
+        })(Tipo = Server.Tipo || (Server.Tipo = {}));
+        let Risposta;
+        (function (Risposta) {
+            let Stato;
+            (function (Stato) {
+                let Successo;
+                (function (Successo) {
+                    Successo[Successo["Ok"] = 200] = "Ok";
+                    Successo[Successo["Created"] = 201] = "Created";
+                    Successo[Successo["Accepted"] = 202] = "Accepted";
+                })(Successo = Stato.Successo || (Stato.Successo = {}));
+                let Errore;
+                (function (Errore) {
+                    Errore[Errore["BadRequest"] = 400] = "BadRequest";
+                    Errore[Errore["Unauthorized"] = 401] = "Unauthorized";
+                    Errore[Errore["Forbidden"] = 402] = "Forbidden";
+                    Errore[Errore["NotFound"] = 403] = "NotFound";
+                })(Errore = Stato.Errore || (Stato.Errore = {}));
+            })(Stato = Risposta.Stato || (Risposta.Stato = {}));
+            class Messaggio {
+                constructor(stato, messaggio, contenuto) {
+                    this.tipo = Server.Tipo.Risposta;
+                    this.stato = stato;
+                    if (messaggio != undefined)
+                        this.messaggio = messaggio;
+                    if (contenuto != undefined)
+                        this.contenuto = contenuto;
+                }
+                toJson() {
+                    return JSON.stringify(this);
+                }
+            }
+            Risposta.Messaggio = Messaggio;
+        })(Risposta = Server.Risposta || (Server.Risposta = {}));
+        class Messaggio {
+            constructor(tipoComunicazione, contenuto) {
+                this.tipo = Tipo.Comunicazione;
+                this.tipoComunicazione = tipoComunicazione;
                 this.contenuto = contenuto;
+            }
+            toJson() {
+                return JSON.stringify(this);
+            }
         }
-        toJson() {
-            return JSON.stringify(this);
-        }
-    }
-    Comunicazione.Risposta = Risposta;
+        Server.Messaggio = Messaggio;
+        let TipoComunicazione;
+        (function (TipoComunicazione) {
+            TipoComunicazione[TipoComunicazione["SessioneJoinata"] = 0] = "SessioneJoinata";
+            TipoComunicazione[TipoComunicazione["GiocatorePronto"] = 1] = "GiocatorePronto";
+            TipoComunicazione[TipoComunicazione["GiocatoreMorto"] = 2] = "GiocatoreMorto";
+            TipoComunicazione[TipoComunicazione["GiocatoreGuarito"] = 3] = "GiocatoreGuarito";
+            TipoComunicazione[TipoComunicazione["PartitaIniziata"] = 4] = "PartitaIniziata";
+            TipoComunicazione[TipoComunicazione["PartitaTerminata"] = 5] = "PartitaTerminata";
+            TipoComunicazione[TipoComunicazione["SessioneTerminata"] = 6] = "SessioneTerminata";
+        })(TipoComunicazione = Server.TipoComunicazione || (Server.TipoComunicazione = {}));
+    })(Server = Comunicazione.Server || (Comunicazione.Server = {}));
 })(Comunicazione = exports.Comunicazione || (exports.Comunicazione = {}));

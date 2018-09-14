@@ -1,81 +1,95 @@
+import { Ruolo } from "./giocatore";
+
 export namespace Comunicazione {
-    export enum Tipo {
-        Richiesta,
-        Risposta
+    export interface Contenuto {
+        numGiocatori?: number,
+        infermiera?: boolean,
+        durata?: number,
+        idSessione?: string,
+        nickname?: string,
+        jwt?: string,
+        ruolo?: Ruolo,
+        giocatori?: Array<String>
     }
-    export enum TipoFase {
-        Preparazione,
-        Gioco
-    }
-    export enum TipoPreparazione {
-        CreaPartita,
-        JoinPartita
-    }
-    export enum TipoGioco {
-        PaesanoMorto,
-        AssassinoScoperto
-
-    }
-    interface Contenuto {
-        nickname?: string;
-    }
-    export interface ContenutoCrea extends Contenuto {
-        durata: number;
-        numGiocatori: number;
-    }
-    export interface ContenutoJoin extends Contenuto {
-        idPartita: String;
-    }
-
-    export namespace Server {
-        export enum EsitoComunicazione {
-            Positivo,
-            Negativo
-        }
-        export enum Successo {
-            Ok = 200,
-            Created,
-            Accepted
-        }
-        export enum Errore {
-            BadRequest = 400,
-            Unauthorized,
-            Forbidden,
-            NotFound
-        }
+    export namespace Client {
         export interface Messaggio {
-            tipoComunicazione: number;
-            valoreComunicazione: number;
-            contenuto: ContenutoCrea | ContenutoJoin | any;
-            esito: EsitoComunicazione;
+            tipoComunicazione: TipoComunicazione,
+            contenuto: Contenuto,
+            jwt?: string
         }
-        export interface ContenutoCrea extends Contenuto {
-            idPartita: String;
+
+        export enum TipoComunicazione {
+            CreaSessione,
+            JoinSessione,
+            ScegliNickname,
+            StatoPronto,
+            CittadinoMorto,
+            CittadinoGuarito,
+            PoliziottoArresta
         }
-        export interface ContenutoJoin extends Contenuto {
-        }
+
     }
-    export interface Messaggio {
-        tipoComunicazione: TipoFase;
-        valoreComunicazione: TipoPreparazione | TipoGioco;
-        contenuto: Contenuto;
-    }
-    export class Risposta {
-        tipo: Tipo = 1;
-        valore: Server.Successo | Server.Errore = 200;
-        messaggio?: string;
-        contenuto?: Contenuto;
-        constructor(stato: Server.Errore | Server.Successo, contenuto?: Contenuto, messaggio?: string) {
-            this.valore = stato;
-            if (messaggio != undefined)
-                this.messaggio = messaggio;
-            if (contenuto != undefined)
+    export namespace Server {
+        export enum Tipo {
+            Comunicazione,
+            Risposta
+        }
+        export namespace Risposta {
+            export namespace Stato {
+                export enum Successo {
+                    Ok = 200,
+                    Created,
+                    Accepted,
+
+                }
+                export enum Errore {
+                    BadRequest = 400,
+                    Unauthorized,
+                    Forbidden,
+                    NotFound
+
+                }
+            }
+            export class Messaggio {
+                tipo: Server.Tipo = Server.Tipo.Risposta;
+                stato: Server.Risposta.Stato.Errore | Server.Risposta.Stato.Successo;
+                messaggio?: string;
+                contenuto?: Comunicazione.Contenuto;
+                constructor(stato: Stato.Errore | Stato.Successo, messaggio?: string, contenuto?: Contenuto) {
+                    this.stato = stato;
+                    if (messaggio != undefined)
+                        this.messaggio = messaggio;
+                    if (contenuto != undefined)
+                        this.contenuto = contenuto;
+
+                }
+                toJson(): string {
+                    return JSON.stringify(this);
+                }
+
+            }
+
+        }
+        export class Messaggio {
+            tipo: Tipo = Tipo.Comunicazione;
+            tipoComunicazione: TipoComunicazione;
+            contenuto: Contenuto;
+            constructor(tipoComunicazione: TipoComunicazione, contenuto: Contenuto) {
+                this.tipoComunicazione = tipoComunicazione;
                 this.contenuto = contenuto;
+            }
+            toJson() {
+                return JSON.stringify(this);
+            }
         }
-        toJson(): string {
-            return JSON.stringify(this);
+        export enum TipoComunicazione {
+            SessioneJoinata,
+            GiocatorePronto,
+            GiocatoreMorto,
+            GiocatoreGuarito,
+            PartitaIniziata,
+            PartitaTerminata,
+            SessioneTerminata
         }
     }
-
-
 }
