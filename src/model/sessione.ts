@@ -5,17 +5,23 @@ export enum Stato { Attesa, Esecuzione }
 export class Sessione {
     durataPartita: number;
     numGiocatori: number;
-    infermiera: boolean;
+    personaggi: Array<{ name: string, quantity: number }>;
     id: string;
     stato: Stato = Stato.Attesa;
     partita: Partita | null;
     partite: Array<Partita>;
-    partecipanti: Partecipante[] = new Array<Partecipante>();
-    constructor(numGiocatori: number, infermiera: boolean, durata = 5) {
+    private _partecipanti: Partecipante[] = new Array<Partecipante>();
+    get partecipanti() {
+        return this._partecipanti;
+    }
+    set partecipanti(partecipanti) {
+        this._partecipanti = partecipanti;
+    }
+    constructor(numGiocatori: number, personaggi, durata = 5) {
         this.partite = new Array();
         this.id = Math.random().toString(36).substr(2, 9);
         this.numGiocatori = numGiocatori;
-        this.infermiera = infermiera;
+        this.personaggi = personaggi;
         this.durataPartita = durata;
         this.partita = null;
     }
@@ -27,10 +33,18 @@ export class Sessione {
         return giocatori;
     }
     creaPartita() {
-        this.partita = new Partita(Math.random().toString(36).substr(2, 9), this.partecipanti, this.durataPartita, this.numGiocatori, this.infermiera);
+        this.partita = new Partita(Math.random().toString(36).substr(2, 9), this.partecipanti, this.durataPartita, this.numGiocatori, this.personaggi);
         this.stato = Stato.Esecuzione;
     }
     getGiocatore(ws: ws) {
 
+    }
+    addPartecipante(partecipante: Partecipante) {
+        if (this.partecipanti.length < this.numGiocatori) {
+            this.partecipanti.push(partecipante);
+
+        } else {
+            throw new Error("Numero massimo partecipanti raggiunto");
+        }
     }
 }

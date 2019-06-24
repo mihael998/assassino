@@ -29,20 +29,31 @@ export class Server {
 
         this.ws.on('connection', (ws, request) => {
             ws.on("message", (data) => {
-                let messaggio, sessione: Sessione;
+                let messaggio, sessione: Sessione, admin, user;
                 let mex: Comunicazione.Client.Messaggio = JSON.parse(data.toString());
+                let partecipante: Partecipante;
                 switch (mex.tipoComunicazione) {
                     case Comunicazione.Client.TipoComunicazione.CreaSessione:
-                        sessione = new Sessione(mex.contenuto.numGiocatori as number, mex.contenuto.infermiera as boolean);
-                        sessione.partecipanti.push(new Partecipante(ws));
+                        sessione = new Sessione(mex.contenuto.numGiocatori, mex.contenuto.infermiera);
+                        admin = new Partecipante(ws);
+                        admin.nickname = mex.contenuto.nickname;
+                        sessione.addPartecipante(admin);
                         Server.sessioni.set(sessione.id, sessione);
                         messaggio = new Comunicazione.Server.Risposta.Messaggio(Comunicazione.Server.Risposta.Stato.Successo.Created, "Sessione creata", { idSessione: sessione.id });
                         ws.send(messaggio.toJson());
                         break;
                     case Comunicazione.Client.TipoComunicazione.JoinSessione:
                         sessione = (Server.sessioni.get(mex.contenuto.idSessione as string) as Sessione);
-                        sessione.partecipanti.push(new Partecipante(ws));
-                        ws.send(new Comunicazione.Server.Risposta.Messaggio(Comunicazione.Server.Risposta.Stato.Successo.Accepted, "Giocatore joinato", { jwt: sessione.id }).toJson());
+                        user = new Partecipante(ws);
+                        user.nickname = mex.contenuto.nickname;
+                        try {
+                            sessione.addPartecipante(user);
+                            messaggio = new Comunicazione.Server.Risposta.Messaggio(Comunicazione.Server.Risposta.Stato.Successo.Accepted, "Giocatore joinato", { jwt: sessione.id });
+                        } catch (error) {
+                            messaggio = new Comunicazione.Server.Risposta.Messaggio(Comunicazione.Server.Risposta.Stato.Errore.BadRequest, "Join non riuscito. Il numero massimo di persone è stato raggiunto.", { idSessione: sessione.id });
+                        }
+
+                        ws.send(messaggio.toJson());
                         break;
                     case Comunicazione.Client.TipoComunicazione.ScegliNickname:
                         sessione = (Server.sessioni.get(mex.jwt as string) as Sessione);
@@ -60,28 +71,19 @@ export class Server {
                         }
                         break;
                     case Comunicazione.Client.TipoComunicazione.StatoPronto:
-                        sessione = (Server.sessioni.get(mex.jwt as string) as Sessione);
-                        let nickname: String;
-                        sessione.partecipanti.forEach((value, index) => {
-                            if (value.ws == ws) {
-                                value.pronto = true;
-                                nickname = value.nickname;
-                            }
-                        });
+                        sessione = (Server.sessioni.get(mex.contenuto.idSessione as string) as Sessione);
+                        partecipante = sessione.partecipanti.find(val => val.ws == ws);
+                        partecipante.pronto = true;
                         ws.send(new Comunicazione.Server.Risposta.Messaggio(Comunicazione.Server.Risposta.Stato.Successo.Accepted, "Stato pronto").toJson());
                         if (sessione.partecipanti.length == sessione.numGiocatori && sessione.partecipanti.every((value): boolean => { return value.pronto; })) {
-                            sessione.stato = Stato.Esecuzione;
                             sessione.creaPartita();
-                            sessione.partecipanti.forEach((value) => {
-                                value.ws.send(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.PartitaIniziata, { durata: sessione.durataPartita, giocatori: sessione.getGiocatori(), }).toJson());
-
+                            sessione.partita.giocatori.forEach((value, key) => {
+                                key.ws.send(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.PartitaIniziata, { durata: sessione.durataPartita, giocatori: sessione.getGiocatori(), ruolo: value.name }).toJson());
                             })
+                            //this.sendBroadcastMessage(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.PartitaIniziata, { durata: sessione.durataPartita, giocatori: sessione.getGiocatori(), }).toJson(), sessione);
                         }
                         else {
-                            sessione.partecipanti.forEach((value) => {
-                                if (value.ws != ws)
-                                    value.ws.send(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.GiocatorePronto, { nickname: nickname.toString() }).toJson());
-                            })
+                            partecipante.sendBroadcastMessage(new Comunicazione.Server.Messaggio(Comunicazione.Server.TipoComunicazione.GiocatorePronto, { nickname: partecipante.nickname.toString() }).toJson(), sessione);
                         }
 
                         break;
@@ -96,13 +98,20 @@ export class Server {
                 Server.sessioni.forEach((value, key) => {
                     console.log(key + " ");
                     console.log("   Partecipanti<" + value.partecipanti.length + ">: ");
-                    value.partecipanti.forEach((value) => {
-                        console.log("   " + value.nickname + " | " + ws);
+                    value.partecipanti.forEach((partecipante) => {
+                        //console.log("partecipante: ", partecipante)
+                        console.log("   ", partecipante.nickname, " | ", partecipante.pronto);
                     })
 
                 });
 
             });
+        });
+    }
+
+    sendBroadcastMessage(message, sessione: Sessione) {
+        sessione.partecipanti.forEach(partecipante => {
+            partecipante.ws.send(message);
         });
     }
 

@@ -4,11 +4,12 @@ export namespace Comunicazione {
     export interface Contenuto {
         numGiocatori?: number,
         infermiera?: boolean,
+        personaggi?: Array<{ name: string, quantity: number }>,
         durata?: number,
         idSessione?: string,
         nickname?: string,
         jwt?: string,
-        ruolo?: Ruolo,
+        ruolo?: string,
         giocatori?: Array<String>
     }
     export namespace Client {
